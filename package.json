@@ -1,0 +1,24 @@
+{
+    "author": "juscamarena@gmail.com",
+    "dependencies": {},
+    "keywords": [],
+    "name": "blocktime",
+    "pebble": {
+        "displayName": "Blocktime",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt"
+        ],
+        "uuid": "560ad899-4a99-40f1-867d-989306fd3b16",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
