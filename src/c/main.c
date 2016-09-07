@@ -26,6 +26,18 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+   // Get bitcoin data updates every 5 minutes
+  if(tick_time->tm_min % 5 == 0) {
+    // Begin dictionary
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+
+    // Add a key-value pair
+    dict_write_uint8(iter, 0, 0);
+
+    // Send the message!
+    app_message_outbox_send();
+  }
 }
 
 
@@ -86,22 +98,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // If all data is available, use it
   if(price_tuple && block_tuple) {
     snprintf(price_buffer, sizeof(price_buffer), "$%d", (int)price_tuple->value->int32);
-    //snprintf(block_buffer, sizeof(block_buffer), "%s", block_tuple->value->cstring);
     snprintf(block_buffer, sizeof(block_buffer), "%d", (int)block_tuple->value->int32);
-
-
+    
+    //set text
     text_layer_set_text(s_price_layer, price_buffer);
     text_layer_set_text(s_block_layer, block_buffer );
   }
-  
-  
-  
-  
-  
-  
-  
-  //add data here
 }
+
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
@@ -127,7 +131,6 @@ static void init() {
   window_stack_push(s_main_window, true);
   // Make sure the time is displayed from the start
   update_time();
-  
   
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);

@@ -5,7 +5,6 @@ var dictionary = {
   "KEY_PRICE": price_usd,
   "KEY_HEIGHT": height
 };
-
   var xhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
