@@ -5,15 +5,20 @@
     "name": "blocktime",
     "pebble": {
         "displayName": "Blocktime",
-        "enableMultiJS": true,
-        "messageKeys": [],
+        "enableMultiJS": false,
+        "messageKeys": {
+            "KEY_HEIGHT": 1,
+            "KEY_PRICE": 0
+        },
         "projectType": "native",
         "resources": {
             "media": []
         },
         "sdkVersion": "3",
         "targetPlatforms": [
-            "basalt"
+            "aplite",
+            "basalt",
+            "chalk"
         ],
         "uuid": "560ad899-4a99-40f1-867d-989306fd3b16",
         "watchapp": {

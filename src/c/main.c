@@ -1,4 +1,8 @@
 #include <pebble.h>
+
+#define KEY_PRICE 0
+#define KEY_HEIGHT 1
+
 static Window *s_main_window; // static window
 
 static TextLayer *s_price_layer; // bitcoin price
@@ -29,16 +33,14 @@ static void main_window_load(Window *window) {
  // Get information about the Window
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
-
   
   // Create the TextLayer for price
-  
   s_price_layer = text_layer_create(GRect(0, 10, 144, 50));
   text_layer_set_background_color(s_price_layer, GColorClear);
   text_layer_set_text_color(s_price_layer, GColorBlack);
   text_layer_set_text_alignment(s_price_layer, GTextAlignmentCenter);
   text_layer_set_font(s_price_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text(s_price_layer, "BTC/USD $606"); // fill in for now
+  text_layer_set_text(s_price_layer, "Loading..."); //"BTC/USD $606"); // fill in for now
   
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_price_layer));
   // Create the TextLayer with specific bounds
@@ -59,7 +61,7 @@ static void main_window_load(Window *window) {
   text_layer_set_text_color(s_block_layer, GColorBlack);
   text_layer_set_text_alignment(s_block_layer, GTextAlignmentCenter);
   text_layer_set_font(s_block_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text(s_block_layer, "Block 420444"); // fill in for now
+  text_layer_set_text(s_block_layer,"Loading..."); // "Block 420444"); // fill in for now
   
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_block_layer));
 }
@@ -69,23 +71,77 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_block_layer);
   text_layer_destroy(s_price_layer);
-
 }
 
+
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+   // Store incoming information
+  static char price_buffer[16];
+  static char block_buffer[16];
+
+  // Read tuples for data
+  Tuple *price_tuple = dict_find(iterator, KEY_PRICE);
+  Tuple *block_tuple = dict_find(iterator, KEY_HEIGHT);
+
+  // If all data is available, use it
+  if(price_tuple && block_tuple) {
+    snprintf(price_buffer, sizeof(price_buffer), "$%d", (int)price_tuple->value->int32);
+    //snprintf(block_buffer, sizeof(block_buffer), "%s", block_tuple->value->cstring);
+    snprintf(block_buffer, sizeof(block_buffer), "%d", (int)block_tuple->value->int32);
+
+
+    text_layer_set_text(s_price_layer, price_buffer);
+    text_layer_set_text(s_block_layer, block_buffer );
+  }
+  
+  
+  
+  
+  
+  
+  
+  //add data here
+}
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+}
 static void init() {
   // Create main Window element and assign to pointer
   s_main_window = window_create();
+  
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
     .load = main_window_load,
     .unload = main_window_unload
   });
-  // Register with TickTimerService
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
-  // Show the Window on the watch, with animated=true
+  
+   // Show the Window on the watch, with animated=true
   window_stack_push(s_main_window, true);
   // Make sure the time is displayed from the start
   update_time();
+  
+  
+  // Register with TickTimerService
+  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  
+  // Register callbacks
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+  
+    // Open AppMessage
+  const int inbox_size = 128;
+  const int outbox_size = 128;
+  app_message_open(inbox_size, outbox_size);
 }
 
 static void deinit() {
